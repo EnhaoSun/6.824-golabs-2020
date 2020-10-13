@@ -5,14 +5,34 @@ import "net"
 import "os"
 import "net/rpc"
 import "net/http"
+import "sync"
 
+type SyncMap struct {
+    sync.Mutex
+	Map map[string]bool
+}
 
 type Master struct {
 	// Your definitions here.
-
+	Nreduce int
+	Mtask SyncMap
 }
 
+
 // Your code here -- RPC handlers for the worker to call.
+
+func (m *Master) MapTask(args *MapArgs, reply *MapReply) error {
+    m.Mtask.Lock()
+    defer m.Mtask.Unlock()
+    for filename := range m.Mtask.Map {
+        if !m.Mtask.Map[filename] {
+            m.Mtask.Map[filename] = true
+            reply.Filename = filename
+            break
+        }
+    }
+    return nil
+}
 
 //
 // an example RPC handler.
@@ -63,7 +83,11 @@ func MakeMaster(files []string, nReduce int) *Master {
 	m := Master{}
 
 	// Your code here.
-
+	m.Nreduce = nReduce
+    m.Mtask = SyncMap{Map: make(map[string]bool),}
+	for _, filename := range files {
+		m.Mtask.Map[filename] = false
+	}
 
 	m.server()
 	return &m

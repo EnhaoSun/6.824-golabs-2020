@@ -35,7 +35,14 @@ func Worker(mapf func(string, string) []KeyValue,
 
 	// uncomment to send the Example RPC to the master.
 	// CallExample()
+    callMap()
+}
 
+func callMap() {
+    args := MapArgs{}
+    reply := MapReply{}
+    call("Master.MapTask", &args, &reply)
+	fmt.Printf("reply file %s\n", reply.Filename)
 }
 
 //

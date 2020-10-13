@@ -23,6 +23,12 @@ type ExampleReply struct {
 }
 
 // Add your RPC definitions here.
+type MapArgs struct {
+}
+
+type MapReply struct {
+    Filename string
+}
 
 
 // Cook up a unique-ish UNIX-domain socket name
