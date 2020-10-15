@@ -4,6 +4,9 @@ import "fmt"
 import "log"
 import "net/rpc"
 import "hash/fnv"
+import "os"
+import "io/ioutil"
+import "encoding/json"
 
 
 //
@@ -35,14 +38,39 @@ func Worker(mapf func(string, string) []KeyValue,
 
 	// uncomment to send the Example RPC to the master.
 	// CallExample()
-    callMap()
+    callMap(mapf)
 }
 
-func callMap() {
+func callMap(mapf func(string, string) []KeyValue) {
     args := MapArgs{}
     reply := MapReply{}
     call("Master.MapTask", &args, &reply)
 	fmt.Printf("reply file %s\n", reply.Filename)
+
+    file, err := os.Open(reply.Filename)
+    if err != nil {
+        log.Fatalf("cannot open %v\n", reply.Filename)
+    }
+    content, err := ioutil.ReadAll(file)
+    if err != nil {
+        log.Fatalf("cannot read %v", reply.Filename)
+    }
+    file.Close()
+    kva := mapf(reply.Filename, string(content))
+
+    intermediate, err := os.OpenFile("mr-0-0", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        log.Fatalf("cannot open %v", intermediate)
+    }
+
+    enc := json.NewEncoder(intermediate)
+    for _, kv := range kva {
+        err := enc.Encode(&kv)
+        if err != nil {
+            log.Fatalf("cannot write %v", intermediate)
+        }
+    }
+
 }
 
 //
