@@ -32,6 +32,14 @@ type MapReply struct {
     Nreduce int
 }
 
+type ReduceArgs struct {
+}
+
+type ReduceReply struct {
+    Ireduce int
+    Mmap int
+}
+
 
 // Cook up a unique-ish UNIX-domain socket name
 // in /var/tmp, for the master.

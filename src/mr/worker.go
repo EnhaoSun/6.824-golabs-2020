@@ -69,12 +69,6 @@ func callMap(mapf func(string, string) []KeyValue) {
     file.Close()
     kva := mapf(reply.Filename, string(content))
 
-    //intermediate, err := os.OpenFile("mr-0-0", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    //if err != nil {
-    //    log.Fatalf("cannot open %v", intermediate)
-    //}
-
-    //enc := json.NewEncoder(intermediate)
     mapNum := reply.Mtask
     nReduce := reply.Nreduce
     for _, kv := range kva {
