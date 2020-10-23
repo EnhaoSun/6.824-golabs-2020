@@ -7,13 +7,19 @@ import "net/rpc"
 import "net/http"
 import "sync"
 
+type Task struct {
+    Filename string
+    Assigned bool
+}
+
 type SyncMap struct {
     sync.Mutex
-	Map map[string]bool
+	Map []Task
 }
 
 type Master struct {
 	// Your definitions here.
+    // N*M buckets
 	Nreduce int
 	Mtask SyncMap
 }
@@ -24,10 +30,12 @@ type Master struct {
 func (m *Master) MapTask(args *MapArgs, reply *MapReply) error {
     m.Mtask.Lock()
     defer m.Mtask.Unlock()
-    for filename := range m.Mtask.Map {
-        if !m.Mtask.Map[filename] {
-            m.Mtask.Map[filename] = true
-            reply.Filename = filename
+    for i, task := range m.Mtask.Map {
+        if !task.Assigned {
+            task.Assigned = true
+            reply.Filename = task.Filename
+            reply.Nreduce = m.Nreduce
+            reply.Mtask = i
             break
         }
     }
@@ -84,9 +92,9 @@ func MakeMaster(files []string, nReduce int) *Master {
 
 	// Your code here.
 	m.Nreduce = nReduce
-    m.Mtask = SyncMap{Map: make(map[string]bool),}
-	for _, filename := range files {
-		m.Mtask.Map[filename] = false
+    m.Mtask = SyncMap{Map: make([]Task, len(files)),}
+	for i, filename := range files {
+		m.Mtask.Map[i].Filename = filename
 	}
 
 	m.server()

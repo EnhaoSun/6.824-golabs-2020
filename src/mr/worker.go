@@ -7,6 +7,17 @@ import "hash/fnv"
 import "os"
 import "io/ioutil"
 import "encoding/json"
+//import "sort"
+import "strconv"
+
+
+// for sorting by key.
+type ByKey []KeyValue
+
+// for sorting by key.
+func (a ByKey) Len() int           { return len(a) }
+func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByKey) Less(i, j int) bool { return a[i].Key < a[j].Key }
 
 
 //
@@ -58,17 +69,30 @@ func callMap(mapf func(string, string) []KeyValue) {
     file.Close()
     kva := mapf(reply.Filename, string(content))
 
-    intermediate, err := os.OpenFile("mr-0-0", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    if err != nil {
-        log.Fatalf("cannot open %v", intermediate)
-    }
+    //intermediate, err := os.OpenFile("mr-0-0", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    //if err != nil {
+    //    log.Fatalf("cannot open %v", intermediate)
+    //}
 
-    enc := json.NewEncoder(intermediate)
+    //enc := json.NewEncoder(intermediate)
+    mapNum := reply.Mtask
+    nReduce := reply.Nreduce
     for _, kv := range kva {
-        err := enc.Encode(&kv)
+        filename := "mr-" + strconv.Itoa(mapNum) + "-" + strconv.Itoa(ihash(kv.Key) % nReduce)
+
+	    fmt.Printf("intermediate file %s\n", filename)
+
+        intermediate, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
         if err != nil {
-            log.Fatalf("cannot write %v", intermediate)
+            log.Fatalf("cannot open intermediate file %v", intermediate)
         }
+
+        enc := json.NewEncoder(intermediate)
+        err = enc.Encode(&kv)
+        if err != nil {
+            log.Fatalf("cannot write intermediate file %v", intermediate)
+        }
+        intermediate.Close()
     }
 
 }

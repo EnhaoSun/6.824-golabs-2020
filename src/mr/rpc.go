@@ -28,6 +28,8 @@ type MapArgs struct {
 
 type MapReply struct {
     Filename string
+    Mtask int
+    Nreduce int
 }
 
 
